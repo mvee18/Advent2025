@@ -1,8 +1,7 @@
-use core::time;
 use std::fs;
 
 fn main() {
-    let file_path = "src/input.txt";
+    let file_path = "day01/src/input.txt";
     let mut starting_dial: i32 = 50;
 
     let zeroes = perform_code(file_path, &mut starting_dial);
@@ -18,7 +17,6 @@ fn perform_code(file_path: &str, starting_dial: &mut i32) -> (i32, i32) {
 
     for line in contents.lines() {
         let (res, times_cross_zero) = rotate_dial(starting_dial, line);
-        println!("{}: {}, {}", line, res, times_cross_zero);
         total_zeroes += times_cross_zero;
         if res == 0 {
             zeroes += 1;
@@ -58,9 +56,6 @@ pub fn rotate_dial(current_pos: &mut i32, rotation: &str) -> (i32, i32) {
 
     let mut final_position = *current_pos + rotation_result;
 
-    println!("Starting position: {}", current_pos);
-    println!("Rotation operation: {}", rotation);
-    println!("Final position before mod: {}", final_position);
     times_crossed_zero += calculate_times_crossed_zero(*current_pos, final_position);
 
     // Rotate it the other way if it is negative...

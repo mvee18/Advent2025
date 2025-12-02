@@ -1,6 +1,5 @@
-[package]
-name = "Advent2025"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
+[workspace]
+members = [
+    "day01",
+]
+resolver = "3"
