@@ -1,3 +1,4 @@
+use core::time;
 use std::fs;
 
 fn main() {
@@ -76,37 +77,25 @@ pub fn rotate_dial(current_pos: &mut i32, rotation: &str) -> (i32, i32) {
     return (final_position, times_crossed_zero);
 }
 
-// This function applies for part II of the puzzle: any time the rotation would
-// cause the dial to read zero, even during a rotation, counts as a zero.
+fn calculate_from_sequence(start: i32, end: i32) -> i32 {
+    let mut dial_sequence: Vec<i32> = (start..end).collect();
+    // The first element can be 0 -- this leads to off by one error. We can just drop it...
+    dial_sequence.remove(0);
+    let mod_seq: Vec<i32> = dial_sequence.into_iter().map(|x| x % 100).collect();
+    let zeroes: i32 = mod_seq.iter().filter(|&x| *x == 0).count() as i32;
+
+    zeroes
+}
+
+// Make a sequence from the starting to end and count the times where mod 100 == 0
 fn calculate_times_crossed_zero(starting_pos: i32, final_position: i32) -> i32 {
     let mut times_crossed_zero = 0;
-    // // Starting position can't be negative; so anytime final_position is negative counts as one crossing of 0, unless it starts on 0.
 
-    // // Simplest case: starting and ending on a positive value
-    // // Divide by 99 and take the floor. It is ok if it starts on 0.
-    // // If we land exactly on a multiple of 100, then we haven't crossed it and need to subtract one from the division (0 --> 100 / 100 -> 1 - 1 = 0)
-    // if final_position > 0 && final_position % 100 == 0 {
-    //     let zeroes: f32 = ((final_position / 100) as f32).abs().floor() - 1.00;
-    //     times_crossed_zero += zeroes as i32;
-    // // The starting position must be between 0 and 99, so it isn't possible to cross 0 if you end at 0.
-    // } else if final_position == 0 {
-    //     times_crossed_zero += 0;
-    // // Clockwise rotation
-    // } else if final_position > 0 && starting_pos >= 0 {
-    //     let zeroes: f32 = ((final_position / 100) as f32).abs().floor();
-    //     times_crossed_zero += zeroes as i32;
-    // // Counter clockwise rotation, need to increment by one since
-    // // this is a crossing of 0, so we can add one to the result
-    // } else if final_position < 0 && starting_pos > 0 {
-    //     let zeroes: f32 = ((final_position / 100) as f32).abs().floor() + 1.00;
-    //     times_crossed_zero += zeroes as i32;
-    // // The first rotation doesn't count since you start at 0
-    // } else if starting_pos == 0 && final_position < 0 {
-    //     let zeroes: f32 = ((final_position / 100) as f32).abs().floor();
-    //     times_crossed_zero += zeroes as i32;
-    // } else {
-    //     panic!("Unhandled case")
-    // }
+    if starting_pos < final_position {
+        times_crossed_zero += calculate_from_sequence(starting_pos, final_position);
+    } else {
+        times_crossed_zero += calculate_from_sequence(final_position, starting_pos);
+    }
 
     times_crossed_zero
 }
