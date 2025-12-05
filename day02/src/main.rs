@@ -1,10 +1,12 @@
 use std::fs;
 
 fn main() {
-    let fp: &str = "src/input.txt";
+    let fp: &str = "day02/src/input.txt";
     let inputs: Vec<String> = read_input(fp);
     let res = sum_int_vec(check_input_sequences(inputs));
-    println!("Result: {}", res);
+    println!("Part 1 Result: {}", res);
+    let res2 = sum_int_vec(check_any_repeats_inputs(read_input(fp)));
+    println!("Part 2 Result: {}", res2);
 }
 
 fn read_input(fp: &str) -> Vec<String> {
@@ -23,7 +25,7 @@ fn parse_id(input_str: &str) -> Vec<i64> {
         .map(|s| s.parse::<i64>().unwrap())
         .collect();
 
-    println!("{:?}", splitted);
+    // println!("{:?}", splitted);
     splitted
 }
 
@@ -39,22 +41,58 @@ fn check_if_repeat_in_value(input_int: i64) -> i64 {
 
     // Midpoint
     let max_repeat_index: usize = input_len / 2;
-    println!(
-        "Repeated index {:?}",
-        &input_int.to_string()[0..max_repeat_index]
-    );
+    // println!(
+    //     "Repeated index {:?}",
+    //     &input_int.to_string()[0..max_repeat_index]
+    // );
 
     // Now we can check if left and right are equal:
     let left: &str = &input_int.to_string()[0..max_repeat_index];
     let right: &str = &input_int.to_string()[max_repeat_index..];
 
-    println!("Left: {:?}, Right: {:?}", left, right);
+    // println!("Left: {:?}, Right: {:?}", left, right);
 
     if left == right {
         return input_int;
     } else {
         return 0;
     }
+}
+
+// ID is invalid if it is made only of some sequence of digits repeated *at least* twice.
+fn check_if_any_repeats(input: i64) -> i64 {
+    // Easiest way is to start with the first value, then see if the following value is the same. Then two, and check if the following two are the same, etc.
+    // The value has to be all repeats though, so we can't just check the first repeat.
+    let input_str: String = input.to_string();
+
+    // I've changed my mind, let's do it cascading. First, check if the first digit is the same as the second. If it is, check the rest of the string in chunks of that size.
+    let input_len: usize = input_str.len();
+    for repeat_size in 1..=input_len / 2 {
+        // Only check if the input length is divisible by the repeat size.
+        if input_len % repeat_size != 0 {
+            continue;
+        }
+
+        let first_chunk: &str = &input_str[0..repeat_size];
+        let mut all_match: bool = true;
+
+        // Now check each chunk of size repeat_size
+        for start_index in (0..input_len).step_by(repeat_size) {
+            let end_index = start_index + repeat_size;
+            let current_chunk: &str = &input_str[start_index..end_index];
+
+            if current_chunk != first_chunk {
+                all_match = false;
+                break;
+            }
+        }
+
+        if all_match {
+            return input;
+        }
+    }
+
+    return 0;
 }
 
 // Takes the input_ids and returns a vector with all values in the sequence between them.
@@ -74,7 +112,7 @@ fn check_input_sequences(inputs: Vec<String>) -> Vec<Vec<i64>> {
     // Over each input parse the id into a Vec<i64> then expand the range. Collect the results into a vec of vecs of i64s.
     let inputs_int: Vec<Vec<i64>> = inputs.iter().map(|s| expand_range(parse_id(s))).collect();
 
-    println!("inputs int: {:?}", inputs_int);
+    // println!("inputs int: {:?}", inputs_int);
 
     // Now for each list in the list of lists, we can detect if it has a repeat.
     let res_int: Vec<Vec<i64>> = inputs_int
@@ -87,7 +125,24 @@ fn check_input_sequences(inputs: Vec<String>) -> Vec<Vec<i64>> {
         })
         .collect();
 
-    println!("{:?}", res_int);
+    // println!("{:?}", res_int);
+
+    res_int
+}
+
+fn check_any_repeats_inputs(inputs: Vec<String>) -> Vec<Vec<i64>> {
+    // Over each input parse the id into a Vec<i64> then expand the range. Collect the results into a vec of vecs of i64s.
+    let inputs_int: Vec<Vec<i64>> = inputs.iter().map(|s| expand_range(parse_id(s))).collect();
+
+    // println!("inputs int: {:?}", inputs_int);
+
+    // Now for each list in the list of lists, we can detect if it has a repeat.
+    let res_int: Vec<Vec<i64>> = inputs_int
+        .iter()
+        .map(|inner_vec| inner_vec.iter().map(|&x| check_if_any_repeats(x)).collect())
+        .collect();
+
+    // println!("{:?}", res_int);
 
     res_int
 }
@@ -144,5 +199,33 @@ mod tests {
         let res = sum_int_vec(check_input_sequences(inputs));
 
         assert_eq!(res, 1227775554);
+    }
+
+    #[test]
+    fn test_if_any_repeats_in_int() {
+        let input1: i64 = 824824824;
+        let input2: i64 = 2121212121;
+        let input3: i64 = 11;
+
+        let want1: i64 = 824824824;
+        let want2: i64 = 2121212121;
+        let want3: i64 = 11;
+
+        let res1 = check_if_any_repeats(input1);
+        let res2 = check_if_any_repeats(input2);
+        let res3 = check_if_any_repeats(input3);
+
+        assert_eq!(res1, want1);
+        assert_eq!(res2, want2);
+        assert_eq!(res3, want3);
+    }
+
+    #[test]
+    fn test_part_ii() {
+        let fp: &str = "src/example.txt";
+        let inputs: Vec<String> = read_input(fp);
+        let res = sum_int_vec(check_any_repeats_inputs(inputs));
+
+        assert_eq!(res, 4174379265);
     }
 }
